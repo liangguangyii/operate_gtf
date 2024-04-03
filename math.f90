@@ -1,5 +1,5 @@
 module math
-
+    use fileIO 
     implicit none
     contains
     
@@ -48,5 +48,41 @@ module math
         Pspin = Palpha - Pbeta        
         
     end subroutine genDensity
+        
+    
+    subroutine MOcoeffoperator(basis_num, MO_num, fileNum, filenameList, operatorList,&
+        aMOcoeff, bMOcoeff, aMOcoefffin, bMOcoefffin)
+        !total number of files=fileNum+1
+        integer, intent(in):: basis_num, MO_num, fileNum
+        real*8, intent(in):: aMOcoeff(:,:), bMOcoeff(:,:)
+        character(len=200), intent(in):: filenameList(:)
+        character(len=1), intent(in):: operatorList(:)
+        
+        real*8, allocatable, intent(out):: aMOcoefffin(:,:), bMOcoefffin(:,:)
+        
+        integer:: ifile
+        real*8, allocatable:: aMOtemp(:,:), bMOtemp(:,:)
+    
+        allocate(aMOcoefffin(MO_num, basis_num), bMOcoefffin(MO_num, basis_num))
+        allocate(aMOtemp(MO_num, basis_num), bMOtemp(MO_num, basis_num))
+        
+        aMOcoefffin = aMOcoeff
+        bMOcoefffin = bMOcoeff
+        
+        do ifile=1, fileNum
+            call readMOcoeff(filenameList(ifile+1), MO_num, basis_num, aMOtemp, bMOtemp)
+            if (operatorList(ifile)=='+') then
+                aMOcoefffin = aMOcoefffin + aMOtemp
+                bMOcoefffin = bMOcoefffin + bMOtemp
+            else if (operatorList(ifile)=='-') then
+                aMOcoefffin = aMOcoefffin - aMOtemp
+                bMOcoefffin = bMOcoefffin - bMOtemp
+            else
+                print*, 'Error: operator not recognized'
+                stop
+            end if
+        end do
+        
+    end subroutine MOcoeffoperator
     
 end module math
